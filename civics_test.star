@@ -281,9 +281,9 @@ def main(config):
     q, a = pick_question()
 
     flag_frames = FLAG_WAVE_FRAMES    # ~1.6s waving flag intro
-    label_hold = 1 * FPS             # ~1s title card
-    q_hold = 10 * FPS               # hold question ~10s
-    a_hold = 10 * FPS               # hold answer ~10s
+    label_hold = FPS // 2            # ~0.5s title card
+    q_hold = 6 * FPS                # hold question ~6s
+    a_hold = 6 * FPS                # hold answer ~6s
 
     frames = []
     for f in range(flag_frames):
