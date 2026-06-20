@@ -292,7 +292,7 @@ def main(config):
     for _ in range(label_hold):
         frames.append(a_label)
 
-    ans = content_screen(a, GOLD)
+    ans = content_screen(a, WHITE)
     for _ in range(a_hold):
         frames.append(ans)
 
