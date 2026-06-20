@@ -167,6 +167,14 @@ GREY = "#888888"
 FRAME_MS = 100             # 10 fps
 FPS = 1000 // FRAME_MS
 
+TOTAL_S   = 15   # total animation duration in seconds
+
+# Percentage of TOTAL_S per section — FLAG + LABEL*2 + Q + A must equal 100
+FLAG_PCT  = 10   #  ~1.5s
+LABEL_PCT =  5   #  ~0.75s each (applied twice)
+Q_PCT     = 40   #  ~6s
+A_PCT     = 40   #  ~6s
+
 # ---------------------------------------------------------------------------
 # Question pick — stable for the day, changes daily
 # ---------------------------------------------------------------------------
@@ -280,10 +288,11 @@ def content_screen(text, color):
 def main(config):
     q, a = pick_question()
 
-    flag_frames = FLAG_WAVE_FRAMES    # ~1.6s waving flag intro
-    label_hold = FPS // 2            # ~0.5s title card
-    q_hold = 6 * FPS                # hold question ~6s
-    a_hold = 6 * FPS                # hold answer ~6s
+    total_frames = TOTAL_S * FPS
+    flag_frames  = total_frames * FLAG_PCT  // 100
+    label_hold   = total_frames * LABEL_PCT // 100
+    q_hold       = total_frames * Q_PCT     // 100
+    a_hold       = total_frames * A_PCT     // 100
 
     frames = []
     for f in range(flag_frames):
