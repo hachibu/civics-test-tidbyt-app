@@ -1,14 +1,18 @@
 """
 civics_test.star — USCIS Civics Test for Tidbyt (Pixlet / Starlark)
 
-Each render:
-  1) Shows a waving American flag (shimmer sweep)
-  2) Shows two randomized civics QUESTIONS (stable pair per day)
-  3) After a configurable delay, reveals each ANSWER
+Each render shows a new random question from the 128 USCIS civics questions:
+  1) Waving American flag (sine-wave pixel animation)
+  2) "QUESTION" title card
+  3) The question text (scrolls vertically if long)
+  4) "ANSWER" title card
+  5) The answer text (scrolls vertically if long)
 
 Run locally:   pixlet serve civics_test.star
 Render to web: pixlet render civics_test.star
-Push:          pixlet push <DEVICE_ID> civics_test.webp --installation-id civics
+Push to device:
+  pixlet render civics_test.star
+  pixlet push <DEVICE_ID> civics_test.webp --api-token <API_TOKEN> --installation-id civics
 """
 
 load("render.star", "render")
