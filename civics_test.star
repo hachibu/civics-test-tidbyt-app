@@ -1,14 +1,14 @@
 """
 civics_test.star — USCIS Civics Test for Tidbyt (Pixlet / Starlark)
 
-Displays one USCIS civics question per render (changes on each push):
+Displays one USCIS civics question per render (changes every 6 hours):
   1) Waving American flag (sine-wave pixel animation)
   2) "QUESTION" title card
   3) The question text (scrolls vertically if long)
   4) "ANSWER" title card
   5) The answer text (scrolls vertically if long)
 
-Updated via GitHub Actions every 6 hours.
+Automatically rendered and pushed via GitHub Actions every 6 hours.
 
 Run locally:   pixlet serve civics_test.star
 Render to web: pixlet render civics_test.star

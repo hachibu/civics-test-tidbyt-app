@@ -1,6 +1,8 @@
 name: Update Civics Question
 
 on:
+  push:
+    branches: [main]
   schedule:
     # Run every 6 hours at 0, 6, 12, 18 UTC
     - cron: '0 */6 * * *'

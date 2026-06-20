@@ -13,9 +13,5 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
       - run: go install github.com/bazelbuild/buildtools/buildifier@latest
-      - run: |
-          mkdir -p /tmp/tidbyt-community/apps/civicstest
-          cp civics_test.star /tmp/tidbyt-community/apps/civicstest/civics_test.star
-          cp manifest.yaml /tmp/tidbyt-community/apps/civicstest/manifest.yaml
       - name: Buildifier format check
-        run: buildifier -mode=check /tmp/tidbyt-community/apps/civicstest/civics_test.star
+        run: buildifier -mode=check civics_test.star
