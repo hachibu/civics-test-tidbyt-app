@@ -166,9 +166,9 @@ FPS = 1000 // FRAME_MS
 # ---------------------------------------------------------------------------
 # Daily randomized question pick (stable for the whole day)
 # ---------------------------------------------------------------------------
-def pick_for_today():
-    ymd = int(time.now().format("20060102"))          # e.g. 20260619
-    idx = (ymd * 1103515245 + 12345) % len(QUESTIONS)
+def pick_question():
+    ts = int(time.now().format("20060102150405"))     # e.g. 20260619143022
+    idx = (ts * 1103515245 + 12345) % len(QUESTIONS)
     return QUESTIONS[idx]
 
 # ---------------------------------------------------------------------------
@@ -269,7 +269,7 @@ def content_screen(text, color):
 def main(config):
     delay_s = int(config.get("answer_delay") or "3")
 
-    q, a = pick_for_today()
+    q, a = pick_question()
 
     flag_frames = FLAG_WAVE_FRAMES    # ~1.6s waving flag intro
     label_hold = 2 * FPS             # ~2s title card
