@@ -37,6 +37,7 @@ make install    # install pixlet via Homebrew
 make serve      # live preview at http://localhost:8080
 make render     # produces civics_test.webp
 make push       # render + push to device (requires env vars below)
+make check      # run pixlet format + lint checks against the community fork (run before publishing)
 ```
 
 Requires shell env vars:
@@ -50,6 +51,8 @@ Push command: `pixlet push $TIDBYT_DEVICE_ID civics_test.webp --api-token $TIDBY
 ## Community App Publishing
 
 The app is published to the Tidbyt community store via a separate fork repo at `/tmp/tidbyt-community` (branch `civics-test`, PR #3224).
+
+**Before publishing**, run `make check` to verify formatting and lint pass. Tidbyt CI enforces buildifier formatting (no column-alignment spaces, two-space inline comments) and flags unused variables — use `_` instead of `config` in `main()`.
 
 **Every time `civics_test.star` or `manifest.yaml` changes**, sync the community fork:
 
