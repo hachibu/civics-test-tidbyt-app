@@ -1,7 +1,7 @@
 """
 civics_test.star — USCIS Civics Test for Tidbyt (Pixlet / Starlark)
 
-Each render shows a new random question from the 128 USCIS civics questions:
+Displays one USCIS civics question per day (changes daily):
   1) Waving American flag (sine-wave pixel animation)
   2) "QUESTION" title card
   3) The question text (scrolls vertically if long)
@@ -12,7 +12,7 @@ Run locally:   pixlet serve civics_test.star
 Render to web: pixlet render civics_test.star
 Push to device:
   pixlet render civics_test.star
-  pixlet push $TIDBYT_DEVICE_ID civics_test.webp --api-token $TIDBYT_API_KEY --installation-id civics
+  pixlet push $TIDBYT_DEVICE_ID civics_test.webp --api-token $TIDBYT_API_KEY --installation-id civicstest
 """
 
 load("render.star", "render")
@@ -157,15 +157,24 @@ QUESTIONS = [
 # ---------------------------------------------------------------------------
 # Colors
 # ---------------------------------------------------------------------------
-RED = "#b22234"
+RED   = "#b22234"
 WHITE = "#ffffff"
-NAVY = "#3c3b6e"
+NAVY  = "#3c3b6e"
 BLACK = "#000000"
-GOLD = "#ffd24a"
-BLUE_LABEL = "#5a7dff"
-GREY = "#888888"
-FRAME_MS = 100             # 10 fps
-FPS = 1000 // FRAME_MS
+GOLD  = "#ffd24a"
+
+FRAME_MS = 100
+FPS      = 1000 // FRAME_MS
+
+DISPLAY_W = 64
+DISPLAY_H = 32
+CONTENT_W = DISPLAY_W - 2   # 1px padding each side
+CONTENT_H = DISPLAY_H - 2
+
+CANTON_W  = 26
+CANTON_H  = 17
+
+SCROLL_THRESHOLD = 60        # chars beyond which text scrolls instead of centers
 
 TOTAL_S   = 15   # total animation duration in seconds
 
@@ -203,18 +212,16 @@ SIN64 = [
 STRIPE_BOUNDS = [0, 3, 5, 8, 10, 13, 15, 18, 20, 23, 25, 28, 30, 32]
 STRIPE_COLORS = [RED, WHITE, RED, WHITE, RED, WHITE, RED, WHITE, RED, WHITE, RED, WHITE, RED]
 
-FLAG_WAVE_FRAMES = 16  # one full wave cycle at 10 fps ≈ 1.6s
-
 def stripe_color(y):
-    for i in range(13):
+    for i in range(len(STRIPE_COLORS)):
         if y < STRIPE_BOUNDS[i + 1]:
             return STRIPE_COLORS[i]
     return RED
 
 def flag_pixel(x, y):
-    if y < 0 or y >= 32:
+    if y < 0 or y >= DISPLAY_H:
         return BLACK
-    if x < 26 and y < 17:
+    if x < CANTON_W and y < CANTON_H:
         # Canton: NAVY with a 4px-grid of white star dots (2px inset from top-left)
         cx = x - 2
         cy = y - 2
@@ -230,7 +237,7 @@ def flag_column(x, frame):
     boxes = []
     run_color = ""
     run_len = 0
-    for r in range(32):
+    for r in range(DISPLAY_H):
         c = flag_pixel(x, r - d)
         if c == run_color:
             run_len += 1
@@ -245,7 +252,7 @@ def flag_column(x, frame):
 
 def flag_wave_frame(frame):
     columns = []
-    for x in range(64):
+    for x in range(DISPLAY_W):
         columns.append(flag_column(x, frame))
     return render.Row(children = columns)
 
@@ -254,19 +261,19 @@ def flag_wave_frame(frame):
 # ---------------------------------------------------------------------------
 def label_screen(label, color):
     return render.Box(
-        width = 64,
-        height = 32,
+        width = DISPLAY_W,
+        height = DISPLAY_H,
         color = BLACK,
         child = render.Text(label, font = "tb-8", color = color),
     )
 
 def content_screen(text, color):
-    wrapped = render.WrappedText(content = text, width = 62, font = "tom-thumb", color = color, align = "center")
-    if len(text) <= 60:
-        # Short enough to fit: center vertically within the 30px area
+    wrapped = render.WrappedText(content = text, width = CONTENT_W, font = "tom-thumb", color = color, align = "center")
+    if len(text) <= SCROLL_THRESHOLD:
+        # Short enough to fit: center vertically within the content area
         inner = render.Box(
-            width = 62,
-            height = 30,
+            width = CONTENT_W,
+            height = CONTENT_H,
             child = render.Column(
                 main_align = "center",
                 cross_align = "center",
@@ -275,10 +282,10 @@ def content_screen(text, color):
         )
     else:
         # Too long to guarantee fit: scroll vertically
-        inner = render.Marquee(height = 30, scroll_direction = "vertical", child = wrapped)
+        inner = render.Marquee(height = CONTENT_H, scroll_direction = "vertical", child = wrapped)
     return render.Box(
-        width = 64,
-        height = 32,
+        width = DISPLAY_W,
+        height = DISPLAY_H,
         color = BLACK,
         child = render.Padding(pad = 1, child = inner),
     )
