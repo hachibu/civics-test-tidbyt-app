@@ -1,12 +1,14 @@
 """
 civics_test.star — USCIS Civics Test for Tidbyt (Pixlet / Starlark)
 
-Displays one USCIS civics question per day (changes daily):
+Displays one USCIS civics question per render (changes on each push):
   1) Waving American flag (sine-wave pixel animation)
   2) "QUESTION" title card
   3) The question text (scrolls vertically if long)
   4) "ANSWER" title card
   5) The answer text (scrolls vertically if long)
+
+Updated via GitHub Actions every 6 hours.
 
 Run locally:   pixlet serve civics_test.star
 Render to web: pixlet render civics_test.star
@@ -185,11 +187,12 @@ Q_PCT = 40  #  ~6s
 A_PCT = 40  #  ~6s
 
 # ---------------------------------------------------------------------------
-# Question pick — stable for the day, changes daily
+# Question pick — random each render via timestamp seed
 # ---------------------------------------------------------------------------
 def pick_question():
-    day = int(time.now().format("20060102"))
-    return QUESTIONS[day % len(QUESTIONS)]
+    # Use current timestamp as seed — different on each render
+    timestamp = int(time.now().format("20060102150405"))
+    return QUESTIONS[timestamp % len(QUESTIONS)]
 
 # ---------------------------------------------------------------------------
 # Flag rendering — pixel-column sine wave animation
