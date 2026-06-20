@@ -168,7 +168,7 @@ FRAME_MS = 100             # 10 fps
 FPS = 1000 // FRAME_MS
 
 # ---------------------------------------------------------------------------
-# Daily randomized question pick (stable for the whole day)
+# Random question pick — different every render
 # ---------------------------------------------------------------------------
 def pick_question():
     ts = int(time.now().format("20060102150405"))     # e.g. 20260619143022
