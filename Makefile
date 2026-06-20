@@ -1,4 +1,6 @@
-APP := civics_test.star
+APP    := civics_test.star
+WEBP   := civics_test.webp
+ID     := civics
 
 install:
 	brew install tidbyt/tidbyt/pixlet
@@ -9,4 +11,7 @@ serve:
 render:
 	pixlet render $(APP)
 
-.PHONY: install serve render
+push: render
+	pixlet push $(TIDBYT_DEVICE_ID) $(WEBP) --api-token $(TIDBIT_API_KEY) --installation-id $(ID)
+
+.PHONY: install serve render push
