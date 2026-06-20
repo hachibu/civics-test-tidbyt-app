@@ -2,6 +2,8 @@
 
 A Tidbyt app that displays a new USCIS civics test question and answer each day. Study for the U.S. citizenship test one question at a time!
 
+![Civics Test Preview](civics_test.webp)
+
 ## Features
 
 - **128 official USCIS civics test questions** — all questions from the official citizenship test
