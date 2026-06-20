@@ -48,6 +48,46 @@ export TIDBYT_API_KEY=your_api_key
 
 Push command: `pixlet push $TIDBYT_DEVICE_ID civics_test.webp --api-token $TIDBYT_API_KEY --installation-id civicstest`
 
+## Local Development
+
+```bash
+git clone https://github.com/hachibu/civics-test-tidbyt-app.git
+cd civics-test-tidbyt-app
+make install          # install pixlet (requires Homebrew)
+make serve            # live preview at http://localhost:8080
+make render           # test render without pushing
+```
+
+To test changes locally, edit `civics_test.star`, run `make serve`, and watch the preview update. Use `make check` before committing to catch formatting issues early.
+
+## Design Rationale
+
+- **Daily seeding** (`day % len(QUESTIONS)`): Pushed WebP is static; `time.now()` only evaluates at render time. Daily seeding ensures users see a different question each day with a single local push. For dynamic minute-by-minute updates, publish to the community store (Tidbyt re-renders every ~15 min).
+- **Run-length encoding in flag wave**: Starlark's `render.Column` with individual boxes is expensive. Instead of 64 columns × 32 rows = 2048 boxes, run-length encoding condenses each column into ~3–5 boxes, reducing total widget count to ~300.
+- **SIN64 integer lookup table**: Starlark has no `math` module. Pre-computed `sin(2πi/64) × 256` for i in 0..63 gives smooth sine values via table lookup; no floating-point overhead.
+- **Percentage-based timing**: Instead of fixed frame counts per section, `TOTAL_S` and percentage constants (`FLAG_PCT`, `Q_PCT`, etc.) keep the animation under Tidbyt's ~15s display limit and make timing adjustments clear and maintainable.
+- **Scroll threshold heuristic** (≤60 chars): Text height can't be measured at render time. Centering short text works for most questions; longer text switches to vertical marquee scrolling. Tuned to fit common question lengths.
+
+## Release Checklist
+
+Before pushing to production:
+
+1. **Test locally**: `make serve` and verify rendering looks correct
+2. **Verify formatting**: `make check` passes (buildifier, lint)
+3. **Commit and push**: Create a PR to main
+4. **CI passes**: GitHub Actions confirms formatting/lint OK
+5. **Sync community fork**: `cp` files and push to `civics-test` branch
+6. **Manual approval**: Merge PR to main after review
+7. **Push to device** (optional): `make push` if you have a Tidbyt
+
+## Troubleshooting
+
+- **`pixlet: command not found`**: Run `make install` to install via Homebrew
+- **`make push` fails**: Ensure `TIDBYT_DEVICE_ID` and `TIDBYT_API_KEY` are set (`echo $TIDBYT_DEVICE_ID`)
+- **`make check` fails on formatting**: Run `pixlet format apps/civicstest/civics_test.star` locally to auto-fix
+- **Community fork out of sync**: Run the sync commands from the "Community App Publishing" section
+- **Same question displayed locally**: That's expected — `time.now()` is frozen at render time. Question changes daily; push to device to see daily rotation
+
 ## Community App Publishing
 
 The app is published to the Tidbyt community store via a separate fork repo at `/tmp/tidbyt-community` (branch `civics-test`, PR #3224).
