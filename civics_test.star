@@ -169,11 +169,10 @@ FPS = 1000 // FRAME_MS
 # ---------------------------------------------------------------------------
 # Daily randomized question pick (stable for the whole day)
 # ---------------------------------------------------------------------------
-def pick_two_for_today():
+def pick_for_today():
     ymd = int(time.now().format("20060102"))          # e.g. 20260619
-    idx1 = (ymd * 1103515245 + 12345) % len(QUESTIONS)
-    idx2 = (idx1 + 7) % len(QUESTIONS)               # offset to avoid adjacent Q
-    return QUESTIONS[idx1], QUESTIONS[idx2]
+    idx = (ymd * 1103515245 + 12345) % len(QUESTIONS)
+    return QUESTIONS[idx]
 
 # ---------------------------------------------------------------------------
 # Flag rendering
@@ -219,60 +218,25 @@ def flag_frame(f):
 # ---------------------------------------------------------------------------
 # Text screens
 # ---------------------------------------------------------------------------
-def question_screen(q):
+def label_screen(label, color):
     return render.Box(
         width = 64,
         height = 32,
         color = BLACK,
-        child = render.Padding(
-            pad = 1,
-            child = render.Column(
-                main_align = "center",
-                cross_align = "center",
-                children = [
-                    render.Text("QUESTION", font = "tom-thumb", color = BLUE_LABEL),
-                    render.Box(width = 1, height = 2),
-                    render.Marquee(
-                        height = 22,
-                        scroll_direction = "vertical",
-                        child = render.WrappedText(content = q, width = 62, font = "tom-thumb", color = WHITE, align = "center"),
-                    ),
-                ],
-            ),
-        ),
+        child = render.Text(label, font = "tb-8", color = color),
     )
 
-def answer_screen(q, a, show_q):
-    if show_q:
-        marquee_child = render.Column(
-            main_align = "center",
-            cross_align = "center",
-            children = [
-                render.WrappedText(content = q, width = 62, font = "tom-thumb", color = GREY, align = "center"),
-                render.Box(width = 1, height = 2),
-                render.WrappedText(content = a, width = 62, font = "tom-thumb", color = GOLD, align = "center"),
-            ],
-        )
-        marquee_height = 30
-    else:
-        marquee_child = render.WrappedText(content = a, width = 62, font = "tom-thumb", color = GOLD, align = "center")
-        marquee_height = 28
+def content_screen(text, color):
     return render.Box(
         width = 64,
         height = 32,
         color = BLACK,
         child = render.Padding(
             pad = 1,
-            child = render.Column(
-                main_align = "center",
-                cross_align = "center",
-                children = [
-                    render.Marquee(
-                        height = marquee_height,
-                        scroll_direction = "vertical",
-                        child = marquee_child,
-                    ),
-                ],
+            child = render.Marquee(
+                height = 30,
+                scroll_direction = "vertical",
+                child = render.WrappedText(content = text, width = 62, font = "tom-thumb", color = color, align = "center"),
             ),
         ),
     )
@@ -282,35 +246,33 @@ def answer_screen(q, a, show_q):
 # ---------------------------------------------------------------------------
 def main(config):
     delay_s = int(config.get("answer_delay") or "3")
-    show_q = config.bool("show_question_with_answer", True)
 
-    pair1, pair2 = pick_two_for_today()
-    q1, a1 = pair1
-    q2, a2 = pair2
+    q, a = pick_for_today()
 
     flag_frames = 14                  # ~1.4s flag intro
-    q_hold = delay_s * FPS            # hold question for the configured delay
-    a_hold = 6 * FPS                  # hold answer ~6s
+    label_hold = 2 * FPS             # ~2s title card
+    q_hold = delay_s * FPS           # hold question for the configured delay
+    a_hold = 6 * FPS                 # hold answer ~6s
 
     frames = []
     for f in range(flag_frames):
         frames.append(flag_frame(f))
 
-    qs1 = question_screen(q1)
+    q_label = label_screen("QUESTION", BLUE_LABEL)
+    for _ in range(label_hold):
+        frames.append(q_label)
+
+    qs = content_screen(q, WHITE)
     for _ in range(q_hold):
-        frames.append(qs1)
+        frames.append(qs)
 
-    ans1 = answer_screen(q1, a1, show_q)
+    a_label = label_screen("ANSWER", GOLD)
+    for _ in range(label_hold):
+        frames.append(a_label)
+
+    ans = content_screen(a, GOLD)
     for _ in range(a_hold):
-        frames.append(ans1)
-
-    qs2 = question_screen(q2)
-    for _ in range(q_hold):
-        frames.append(qs2)
-
-    ans2 = answer_screen(q2, a2, show_q)
-    for _ in range(a_hold):
-        frames.append(ans2)
+        frames.append(ans)
 
     return render.Root(
         delay = FRAME_MS,
@@ -339,13 +301,6 @@ def get_schema():
                 icon = "clock",
                 default = "3",
                 options = delay_options,
-            ),
-            schema.Toggle(
-                id = "show_question_with_answer",
-                name = "Keep question on answer screen",
-                desc = "Show the question above the answer when it's revealed.",
-                icon = "eye",
-                default = True,
             ),
         ],
     )
