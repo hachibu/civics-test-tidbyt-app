@@ -169,11 +169,12 @@ FPS = 1000 // FRAME_MS
 
 TOTAL_S   = 15   # total animation duration in seconds
 
-# Percentage of TOTAL_S per section — FLAG + LABEL*2 + Q + A must equal 100
+# Percentage of TOTAL_S per section — must sum to 100
 FLAG_PCT  = 10   #  ~1.5s
 LABEL_PCT =  5   #  ~0.75s each (applied twice)
 Q_PCT     = 40   #  ~6s
 A_PCT     = 40   #  ~6s
+
 
 # ---------------------------------------------------------------------------
 # Question pick — stable for the day, changes daily
@@ -286,6 +287,9 @@ def content_screen(text, color):
 # Main
 # ---------------------------------------------------------------------------
 def main(config):
+    if FLAG_PCT + LABEL_PCT * 2 + Q_PCT + A_PCT != 100:
+        fail("Time percentages must sum to 100")
+
     q, a = pick_question()
 
     total_frames = TOTAL_S * FPS
