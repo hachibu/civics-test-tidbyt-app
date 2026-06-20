@@ -15,10 +15,4 @@ render:
 push: render
 	pixlet push $(TIDBYT_DEVICE_ID) $(WEBP) --api-token $(TIDBYT_API_KEY) --installation-id $(ID)
 
-check:
-	pixlet check /tmp/tidbyt-community/apps/civicstest
-
-sync-community:
-	bash scripts/sync-community.sh
-
-.PHONY: install serve render push check sync-community
+.PHONY: install serve render push

@@ -49,11 +49,21 @@ Push command: `pixlet push $TIDBYT_DEVICE_ID civics_test.webp --api-token $TIDBY
 
 ## GitHub Actions Workflow
 
-The app is automatically updated every 6 hours via GitHub Actions. The workflow:
+The app is automatically updated and pushed to your Tidbyt via GitHub Actions:
+
+**Triggers:**
+1. On every commit to main (after checks pass)
+2. Every 6 hours (0, 6, 12, 18 UTC) as a fallback
+3. Manual trigger via Actions tab
+
+**What it does:**
 1. Checks out the repo
-2. Runs `make render` to generate a new WebP with a random question
-3. Commits the updated `civics_test.webp` to `main`
-4. Pushes to your Tidbyt device
+2. Installs pixlet
+3. Renders a fresh `civics_test.webp` with a new question (via timestamp seed)
+4. Pushes to your device
+5. **Does not commit** changes back to main
+
+Code changes are committed manually via PR; the workflow handles rendering and pushing automatically.
 
 **Setup**: Add these secrets to your GitHub repository settings:
 - `TIDBYT_DEVICE_ID`: Your device ID
@@ -69,11 +79,16 @@ make serve            # live preview at http://localhost:8080
 make render           # test render without pushing
 ```
 
-To test changes locally, edit `civics_test.star`, run `make serve`, and watch the preview update. Use `make check` before committing to catch formatting issues early.
+To test changes locally, edit `civics_test.star`, run `make serve`, and watch the preview update. After making code changes:
+1. Run `make render` to generate the WebP
+2. Commit **both** the code and WebP changes
+3. Create a PR to main
+
+The GitHub Actions workflow will then render and push new questions every 6 hours without committing.
 
 ## Design Rationale
 
-- **Timestamp-based seeding** (`timestamp % len(QUESTIONS)`): Each render gets a unique timestamp seed, so every GitHub Actions push shows a different question. Gives users new content every 6 hours.
+- **Timestamp-based seeding** (`timestamp % len(QUESTIONS)`): Each render gets a unique timestamp seed. GitHub Actions renders every 6 hours with a fresh timestamp, so users see a different question each time.
 - **Run-length encoding in flag wave**: Starlark's `render.Column` with individual boxes is expensive. Instead of 64 columns × 32 rows = 2048 boxes, run-length encoding condenses each column into ~3–5 boxes, reducing total widget count to ~300.
 - **SIN64 integer lookup table**: Starlark has no `math` module. Pre-computed `sin(2πi/64) × 256` for i in 0..63 gives smooth sine values via table lookup; no floating-point overhead.
 - **Percentage-based timing**: Instead of fixed frame counts per section, `TOTAL_S` and percentage constants (`FLAG_PCT`, `Q_PCT`, etc.) keep the animation under Tidbyt's ~15s display limit and make timing adjustments clear and maintainable.
@@ -84,9 +99,32 @@ To test changes locally, edit `civics_test.star`, run `make serve`, and watch th
 Before merging code changes:
 
 1. **Test locally**: `make serve` and verify rendering looks correct
-2. **Commit and push**: Create a PR to main
-3. **Manual approval**: Merge PR to main after review
-4. **GitHub Actions**: Workflow automatically renders and pushes to device every 6 hours
+2. **Render and commit**: Run `make render` to update `civics_test.webp`, then commit **both code and WebP changes** together in a single commit
+3. **Create PR**: Push to a feature branch and create a PR to main
+4. **Merge strategy**: Always **squash and merge** (or rebase and merge) to keep main history clean — each PR becomes one atomic commit on main
+5. **GitHub Actions**: Workflow automatically renders and pushes new questions to device every 6 hours
+
+## Important: Workflow Git Practice
+
+**Before creating new feature branches**, always pull the latest from main:
+```bash
+git checkout main && git pull origin main
+git checkout -b feature/your-feature-name
+```
+
+**Keep branches up to date with main** — if main advances while your PR is open, rebase:
+```bash
+git fetch origin
+git rebase origin/main
+git push origin feature-branch --force-with-lease
+```
+
+**For PRs**, when making changes during review or iteration:
+- Amend the original commit: `git commit --amend`
+- Force push to update the PR: `git push origin feature-branch --force-with-lease`
+- Keep the PR as a single atomic commit (squashed if needed)
+
+This keeps git history clean, avoids merge conflicts, and makes each PR one focused change.
 
 ## Troubleshooting
 
@@ -105,4 +143,4 @@ Before merging code changes:
 - `render.Marquee(scroll_direction="vertical")` scrolls content taller than its `height`
 - `render.WrappedText` handles multi-line text within a fixed width
 - Tidbyt installation IDs must be alphanumeric only (no underscores) — hence `civicstest` not `civics_test`
-- Pushed WebP files are static — `time.now()` is evaluated at render time, not on each display cycle. GitHub Actions re-renders and pushes every 6 hours with a new random question
+- Pushed WebP files are static — `time.now()` is evaluated at render time, not on each display cycle. GitHub Actions renders with a fresh timestamp every 6 hours, generating a new WebP with a different question each time
