@@ -249,18 +249,26 @@ def label_screen(label, color):
     )
 
 def content_screen(text, color):
+    wrapped = render.WrappedText(content = text, width = 62, font = "tom-thumb", color = color, align = "center")
+    if len(text) <= 60:
+        # Short enough to fit: center vertically within the 30px area
+        inner = render.Box(
+            width = 62,
+            height = 30,
+            child = render.Column(
+                main_align = "center",
+                cross_align = "center",
+                children = [wrapped],
+            ),
+        )
+    else:
+        # Too long to guarantee fit: scroll vertically
+        inner = render.Marquee(height = 30, scroll_direction = "vertical", child = wrapped)
     return render.Box(
         width = 64,
         height = 32,
         color = BLACK,
-        child = render.Padding(
-            pad = 1,
-            child = render.Marquee(
-                height = 30,
-                scroll_direction = "vertical",
-                child = render.WrappedText(content = text, width = 62, font = "tom-thumb", color = color, align = "center"),
-            ),
-        ),
+        child = render.Padding(pad = 1, child = inner),
     )
 
 # ---------------------------------------------------------------------------
