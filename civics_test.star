@@ -160,9 +160,6 @@ BLACK = "#000000"
 GOLD = "#ffd24a"
 BLUE_LABEL = "#5a7dff"
 GREY = "#888888"
-SHIMMER = "#ffffff55"      # translucent white band
-TRANSPARENT = "#00000000"
-
 FRAME_MS = 100             # 10 fps
 FPS = 1000 // FRAME_MS
 
@@ -175,45 +172,70 @@ def pick_for_today():
     return QUESTIONS[idx]
 
 # ---------------------------------------------------------------------------
-# Flag rendering
+# Flag rendering — pixel-column sine wave animation
 # ---------------------------------------------------------------------------
-def stripes():
-    # 13 stripes whose heights sum to 32 px
-    heights = [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 2]
-    rows = []
-    for i in range(len(heights)):
-        color = RED if i % 2 == 0 else WHITE
-        rows.append(render.Box(width = 64, height = heights[i], color = color))
-    return render.Column(children = rows)
 
-def canton():
-    # Blue field (~26x17) with a grid of white "stars"
-    star_rows = []
-    for _ in range(4):
-        cells = []
-        for _ in range(6):
-            cells.append(render.Box(width = 1, height = 1, color = WHITE))
-            cells.append(render.Box(width = 3, height = 1, color = NAVY))
-        star_rows.append(render.Row(children = cells))
-        star_rows.append(render.Box(width = 1, height = 3, color = NAVY))
-    return render.Box(
-        width = 26,
-        height = 17,
-        color = NAVY,
-        child = render.Padding(pad = (2, 2, 0, 0), child = render.Column(children = star_rows)),
-    )
+# sin(2*pi*i/64) * 256 for i in 0..63 (integer lookup, no math lib needed)
+SIN64 = [
+    0, 25, 50, 74, 98, 121, 142, 162,
+    181, 198, 213, 226, 237, 245, 251, 255,
+    256, 255, 251, 245, 237, 226, 213, 198,
+    181, 162, 142, 121, 98, 74, 50, 25,
+    0, -25, -50, -74, -98, -121, -142, -162,
+    -181, -198, -213, -226, -237, -245, -251, -255,
+    -256, -255, -251, -245, -237, -226, -213, -198,
+    -181, -162, -142, -121, -98, -74, -50, -25,
+]
 
-def flag_base():
-    return render.Stack(children = [stripes(), canton()])
+# Cumulative y-bounds for the 13 flag stripes (heights sum to 32px)
+STRIPE_BOUNDS = [0, 3, 5, 8, 10, 13, 15, 18, 20, 23, 25, 28, 30, 32]
+STRIPE_COLORS = [RED, WHITE, RED, WHITE, RED, WHITE, RED, WHITE, RED, WHITE, RED, WHITE, RED]
 
-def flag_frame(f):
-    # A translucent band sweeps left->right to read as a "wave" / glint
-    x = f * 6
-    band = render.Row(children = [
-        render.Box(width = x, height = 32, color = TRANSPARENT),
-        render.Box(width = 6, height = 32, color = SHIMMER),
-    ])
-    return render.Stack(children = [flag_base(), band])
+FLAG_WAVE_FRAMES = 16  # one full wave cycle at 10 fps ≈ 1.6s
+
+def stripe_color(y):
+    for i in range(13):
+        if y < STRIPE_BOUNDS[i + 1]:
+            return STRIPE_COLORS[i]
+    return RED
+
+def flag_pixel(x, y):
+    if y < 0 or y >= 32:
+        return BLACK
+    if x < 26 and y < 17:
+        # Canton: NAVY with a 4px-grid of white star dots (2px inset from top-left)
+        cx = x - 2
+        cy = y - 2
+        if cx >= 0 and cy >= 0 and cx % 4 == 0 and cy % 4 == 0:
+            return WHITE
+        return NAVY
+    return stripe_color(y)
+
+def flag_column(x, frame):
+    # 2 sine wavelengths across the 64px width; wave travels right each frame
+    phase = (x * 2 - frame * 4) % 64
+    d = SIN64[phase] * 3 // 256  # ±3px vertical offset
+    boxes = []
+    run_color = ""
+    run_len = 0
+    for r in range(32):
+        c = flag_pixel(x, r - d)
+        if c == run_color:
+            run_len += 1
+        else:
+            if run_len > 0:
+                boxes.append(render.Box(width = 1, height = run_len, color = run_color))
+            run_color = c
+            run_len = 1
+    if run_len > 0:
+        boxes.append(render.Box(width = 1, height = run_len, color = run_color))
+    return render.Column(children = boxes)
+
+def flag_wave_frame(frame):
+    columns = []
+    for x in range(64):
+        columns.append(flag_column(x, frame))
+    return render.Row(children = columns)
 
 # ---------------------------------------------------------------------------
 # Text screens
@@ -249,14 +271,14 @@ def main(config):
 
     q, a = pick_for_today()
 
-    flag_frames = 14                  # ~1.4s flag intro
+    flag_frames = FLAG_WAVE_FRAMES    # ~1.6s waving flag intro
     label_hold = 2 * FPS             # ~2s title card
     q_hold = delay_s * FPS           # hold question for the configured delay
     a_hold = 6 * FPS                 # hold answer ~6s
 
     frames = []
     for f in range(flag_frames):
-        frames.append(flag_frame(f))
+        frames.append(flag_wave_frame(f))
 
     q_label = label_screen("QUESTION", BLUE_LABEL)
     for _ in range(label_hold):
