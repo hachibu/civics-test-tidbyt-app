@@ -171,9 +171,7 @@ FPS = 1000 // FRAME_MS
 # Random question pick — different every render
 # ---------------------------------------------------------------------------
 def pick_question():
-    ts = int(time.now().format("20060102150405"))     # e.g. 20260619143022
-    idx = (ts * 1103515245 + 12345) % len(QUESTIONS)
-    return QUESTIONS[idx]
+    return QUESTIONS[time.now().unix % len(QUESTIONS)]
 
 # ---------------------------------------------------------------------------
 # Flag rendering — pixel-column sine wave animation
