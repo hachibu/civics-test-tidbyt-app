@@ -1,3 +1,6 @@
+-include .env
+export TIDBYT_DEVICE_ID TIDBIT_API_KEY
+
 APP    := civics_test.star
 WEBP   := civics_test.webp
 ID     := civics
