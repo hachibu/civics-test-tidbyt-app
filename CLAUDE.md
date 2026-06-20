@@ -20,7 +20,7 @@ Each render picks a new random question and plays this sequence:
 ## Data
 
 - 128 USCIS civics questions with concise, screen-friendly answers in `QUESTIONS` list
-- `pick_question()` seeds an LCG from the current timestamp (`YYYYMMDDHHmmss`) for a new question each render
+- `pick_question()` selects `QUESTIONS[day % len(QUESTIONS)]` where `day = int(time.now().format("20060102"))` — stable all day, advances daily
 
 ## Rendering
 
@@ -46,6 +46,26 @@ export TIDBYT_API_KEY=your_api_key
 ```
 
 Push command: `pixlet push $TIDBYT_DEVICE_ID civics_test.webp --api-token $TIDBYT_API_KEY --installation-id civicstest`
+
+## Community App Publishing
+
+The app is published to the Tidbyt community store via a separate fork repo at `/tmp/tidbyt-community` (branch `civics-test`, PR #3224).
+
+**Every time `civics_test.star` or `manifest.yaml` changes**, sync the community fork:
+
+```bash
+cp civics_test.star /tmp/tidbyt-community/apps/civicstest/civics_test.star
+cp manifest.yaml /tmp/tidbyt-community/apps/civicstest/manifest.yaml
+cd /tmp/tidbyt-community
+git add apps/civicstest/
+git commit -m "your message"
+git push origin civics-test
+```
+
+Key constraints from Tidbyt CI:
+- `manifest.yaml` `summary` field must be **≤ 26 characters**
+- `id` in manifest must be kebab-case (`civics-test`); `packageName` must be camelCase (`civicstest`)
+- Installation ID passed to `pixlet push --installation-id` must be alphanumeric only
 
 ## Starlark / Pixlet Notes
 
