@@ -18,4 +18,7 @@ push: render
 check:
 	pixlet check /tmp/tidbyt-community/apps/civicstest
 
-.PHONY: install serve render push check
+sync-community:
+	bash scripts/sync-community.sh
+
+.PHONY: install serve render push check sync-community
