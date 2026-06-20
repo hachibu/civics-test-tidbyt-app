@@ -348,6 +348,10 @@ def content_screen(text, color):
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+def add_held_frames(frames, screen, count):
+    for _ in range(count):
+        frames.append(screen)
+
 def main(_):
     if FLAG_PCT + LABEL_PCT * 2 + Q_PCT + A_PCT != 100:
         fail("Time percentages must sum to 100")
@@ -364,21 +368,10 @@ def main(_):
     for f in range(flag_frames):
         frames.append(flag_wave_frame(f))
 
-    q_label = label_screen("QUESTION", GOLD)
-    for _ in range(label_hold):
-        frames.append(q_label)
-
-    qs = content_screen(q, WHITE)
-    for _ in range(q_hold):
-        frames.append(qs)
-
-    a_label = label_screen("ANSWER", GOLD)
-    for _ in range(label_hold):
-        frames.append(a_label)
-
-    ans = content_screen(a, WHITE)
-    for _ in range(a_hold):
-        frames.append(ans)
+    add_held_frames(frames, label_screen("QUESTION", GOLD), label_hold)
+    add_held_frames(frames, content_screen(q, WHITE), q_hold)
+    add_held_frames(frames, label_screen("ANSWER", GOLD), label_hold)
+    add_held_frames(frames, content_screen(a, WHITE), a_hold)
 
     return render.Root(
         delay = FRAME_MS,
