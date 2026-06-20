@@ -1,7 +1,7 @@
 NAME   := civics_test
 APP    := $(NAME).star
 WEBP   := $(NAME).webp
-ID     := $(NAME)
+ID     := civicstest
 
 install:
 	brew install tidbyt/tidbyt/pixlet
