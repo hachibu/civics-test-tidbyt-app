@@ -12,7 +12,7 @@ Run locally:   pixlet serve civics_test.star
 Render to web: pixlet render civics_test.star
 Push to device:
   pixlet render civics_test.star
-  pixlet push <DEVICE_ID> civics_test.webp --api-token <API_TOKEN> --installation-id civics
+  pixlet push $TIDBYT_DEVICE_ID civics_test.webp --api-token $TIDBIT_API_KEY --installation-id civics
 """
 
 load("render.star", "render")
