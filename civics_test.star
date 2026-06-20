@@ -288,7 +288,7 @@ def main(config):
     for f in range(flag_frames):
         frames.append(flag_wave_frame(f))
 
-    q_label = label_screen("QUESTION", BLUE_LABEL)
+    q_label = label_screen("QUESTION", GOLD)
     for _ in range(label_hold):
         frames.append(q_label)
 
