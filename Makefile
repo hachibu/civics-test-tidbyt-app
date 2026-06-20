@@ -1,6 +1,6 @@
 APP    := civics_test.star
 WEBP   := civics_test.webp
-ID     := civics
+ID     := civics_test
 
 install:
 	brew install tidbyt/tidbyt/pixlet
