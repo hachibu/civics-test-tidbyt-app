@@ -157,33 +157,32 @@ QUESTIONS = [
 # ---------------------------------------------------------------------------
 # Colors
 # ---------------------------------------------------------------------------
-RED   = "#b22234"
+RED = "#b22234"
 WHITE = "#ffffff"
-NAVY  = "#3c3b6e"
+NAVY = "#3c3b6e"
 BLACK = "#000000"
-GOLD  = "#ffd24a"
+GOLD = "#ffd24a"
 
 FRAME_MS = 100
-FPS      = 1000 // FRAME_MS
+FPS = 1000 // FRAME_MS
 
 DISPLAY_W = 64
 DISPLAY_H = 32
-CONTENT_W = DISPLAY_W - 2   # 1px padding each side
+CONTENT_W = DISPLAY_W - 2  # 1px padding each side
 CONTENT_H = DISPLAY_H - 2
 
-CANTON_W  = 26
-CANTON_H  = 17
+CANTON_W = 26
+CANTON_H = 17
 
-SCROLL_THRESHOLD = 60        # chars beyond which text scrolls instead of centers
+SCROLL_THRESHOLD = 60  # chars beyond which text scrolls instead of centers
 
-TOTAL_S   = 15   # total animation duration in seconds
+TOTAL_S = 15  # total animation duration in seconds
 
 # Percentage of TOTAL_S per section — must sum to 100
-FLAG_PCT  = 10   #  ~1.5s
-LABEL_PCT =  5   #  ~0.75s each (applied twice)
-Q_PCT     = 40   #  ~6s
-A_PCT     = 40   #  ~6s
-
+FLAG_PCT = 10  #  ~1.5s
+LABEL_PCT = 5  #  ~0.75s each (applied twice)
+Q_PCT = 40  #  ~6s
+A_PCT = 40  #  ~6s
 
 # ---------------------------------------------------------------------------
 # Question pick — stable for the day, changes daily
@@ -198,14 +197,70 @@ def pick_question():
 
 # sin(2*pi*i/64) * 256 for i in 0..63 (integer lookup, no math lib needed)
 SIN64 = [
-    0, 25, 50, 74, 98, 121, 142, 162,
-    181, 198, 213, 226, 237, 245, 251, 255,
-    256, 255, 251, 245, 237, 226, 213, 198,
-    181, 162, 142, 121, 98, 74, 50, 25,
-    0, -25, -50, -74, -98, -121, -142, -162,
-    -181, -198, -213, -226, -237, -245, -251, -255,
-    -256, -255, -251, -245, -237, -226, -213, -198,
-    -181, -162, -142, -121, -98, -74, -50, -25,
+    0,
+    25,
+    50,
+    74,
+    98,
+    121,
+    142,
+    162,
+    181,
+    198,
+    213,
+    226,
+    237,
+    245,
+    251,
+    255,
+    256,
+    255,
+    251,
+    245,
+    237,
+    226,
+    213,
+    198,
+    181,
+    162,
+    142,
+    121,
+    98,
+    74,
+    50,
+    25,
+    0,
+    -25,
+    -50,
+    -74,
+    -98,
+    -121,
+    -142,
+    -162,
+    -181,
+    -198,
+    -213,
+    -226,
+    -237,
+    -245,
+    -251,
+    -255,
+    -256,
+    -255,
+    -251,
+    -245,
+    -237,
+    -226,
+    -213,
+    -198,
+    -181,
+    -162,
+    -142,
+    -121,
+    -98,
+    -74,
+    -50,
+    -25,
 ]
 
 # Cumulative y-bounds for the 13 flag stripes (heights sum to 32px)
@@ -293,17 +348,17 @@ def content_screen(text, color):
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
-def main(config):
+def main(_):
     if FLAG_PCT + LABEL_PCT * 2 + Q_PCT + A_PCT != 100:
         fail("Time percentages must sum to 100")
 
     q, a = pick_question()
 
     total_frames = TOTAL_S * FPS
-    flag_frames  = total_frames * FLAG_PCT  // 100
-    label_hold   = total_frames * LABEL_PCT // 100
-    q_hold       = total_frames * Q_PCT     // 100
-    a_hold       = total_frames * A_PCT     // 100
+    flag_frames = total_frames * FLAG_PCT // 100
+    label_hold = total_frames * LABEL_PCT // 100
+    q_hold = total_frames * Q_PCT // 100
+    a_hold = total_frames * A_PCT // 100
 
     frames = []
     for f in range(flag_frames):
