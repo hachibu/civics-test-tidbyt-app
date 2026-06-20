@@ -279,14 +279,12 @@ def content_screen(text, color):
 # Main
 # ---------------------------------------------------------------------------
 def main(config):
-    delay_s = int(config.get("answer_delay") or "3")
-
     q, a = pick_question()
 
     flag_frames = FLAG_WAVE_FRAMES    # ~1.6s waving flag intro
     label_hold = 2 * FPS             # ~2s title card
-    q_hold = delay_s * FPS           # hold question for the configured delay
-    a_hold = 6 * FPS                 # hold answer ~6s
+    q_hold = 15 * FPS               # hold question ~15s
+    a_hold = 10 * FPS               # hold answer ~10s
 
     frames = []
     for f in range(flag_frames):
@@ -318,23 +316,4 @@ def main(config):
 # Schema (configuration in the Tidbyt app)
 # ---------------------------------------------------------------------------
 def get_schema():
-    delay_options = [
-        schema.Option(display = "2 seconds", value = "2"),
-        schema.Option(display = "3 seconds", value = "3"),
-        schema.Option(display = "5 seconds", value = "5"),
-        schema.Option(display = "7 seconds", value = "7"),
-        schema.Option(display = "10 seconds", value = "10"),
-    ]
-    return schema.Schema(
-        version = "1",
-        fields = [
-            schema.Dropdown(
-                id = "answer_delay",
-                name = "Answer delay",
-                desc = "How long to show the question before revealing the answer.",
-                icon = "clock",
-                default = "3",
-                options = delay_options,
-            ),
-        ],
-    )
+    return schema.Schema(version = "1", fields = [])
