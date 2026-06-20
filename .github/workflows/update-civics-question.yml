@@ -1,0 +1,43 @@
+name: Update Civics Question
+
+on:
+  schedule:
+    # Run every 6 hours at 0, 6, 12, 18 UTC
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pixlet
+        run: |
+          brew install tidbyt/tidbyt/pixlet
+
+      - name: Render new question
+        run: |
+          make render
+
+      - name: Commit and push WebP
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add civics_test.webp
+          git commit -m "Update civics question" || true
+          git push origin main
+
+      - name: Push to Tidbyt device
+        env:
+          TIDBYT_DEVICE_ID: ${{ secrets.TIDBYT_DEVICE_ID }}
+          TIDBYT_API_KEY: ${{ secrets.TIDBYT_API_KEY }}
+        run: |
+          if [ -n "$TIDBYT_DEVICE_ID" ] && [ -n "$TIDBYT_API_KEY" ]; then
+            pixlet push $TIDBYT_DEVICE_ID civics_test.webp --api-token $TIDBYT_API_KEY --installation-id civicstest
+          else
+            echo "Skipping device push: TIDBYT_DEVICE_ID or TIDBYT_API_KEY not set"
+          fi

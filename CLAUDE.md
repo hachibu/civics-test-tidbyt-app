@@ -10,7 +10,7 @@ A Tidbyt app written in **Starlark** (Pixlet framework) that displays USCIS civi
 
 ## How It Works
 
-Each render picks a new random question and plays this sequence:
+Each render picks a new question via timestamp seed and plays this sequence:
 1. **Flag intro** (~1.6s): Pixel-column sine wave animation — each of 64 columns shifts vertically by ±3px based on a sine lookup table
 2. **"QUESTION" title card** (~2s): Gold text on black
 3. **Question text** (15s): White, vertically centered if ≤60 chars, else scrolls via `render.Marquee`
@@ -20,7 +20,7 @@ Each render picks a new random question and plays this sequence:
 ## Data
 
 - 128 USCIS civics questions with concise, screen-friendly answers in `QUESTIONS` list
-- `pick_question()` selects `QUESTIONS[day % len(QUESTIONS)]` where `day = int(time.now().format("20060102"))` — stable all day, advances daily
+- `pick_question()` selects `QUESTIONS[timestamp % len(QUESTIONS)]` where `timestamp = int(time.now().format("20060102150405"))` — different on each render
 
 ## Rendering
 
@@ -37,7 +37,6 @@ make install    # install pixlet via Homebrew
 make serve      # live preview at http://localhost:8080
 make render     # produces civics_test.webp
 make push       # render + push to device (requires env vars below)
-make check      # run pixlet format + lint checks against the community fork (run before publishing)
 ```
 
 Requires shell env vars:
@@ -47,6 +46,18 @@ export TIDBYT_API_KEY=your_api_key
 ```
 
 Push command: `pixlet push $TIDBYT_DEVICE_ID civics_test.webp --api-token $TIDBYT_API_KEY --installation-id civicstest`
+
+## GitHub Actions Workflow
+
+The app is automatically updated every 6 hours via GitHub Actions. The workflow:
+1. Checks out the repo
+2. Runs `make render` to generate a new WebP with a random question
+3. Commits the updated `civics_test.webp` to `main`
+4. Pushes to your Tidbyt device
+
+**Setup**: Add these secrets to your GitHub repository settings:
+- `TIDBYT_DEVICE_ID`: Your device ID
+- `TIDBYT_API_KEY`: Your API key from Tidbyt
 
 ## Local Development
 
@@ -62,7 +73,7 @@ To test changes locally, edit `civics_test.star`, run `make serve`, and watch th
 
 ## Design Rationale
 
-- **Daily seeding** (`day % len(QUESTIONS)`): Pushed WebP is static; `time.now()` only evaluates at render time. Daily seeding ensures users see a different question each day with a single local push. For dynamic minute-by-minute updates, publish to the community store (Tidbyt re-renders every ~15 min).
+- **Timestamp-based seeding** (`timestamp % len(QUESTIONS)`): Each render gets a unique timestamp seed, so every GitHub Actions push shows a different question. Gives users new content every 6 hours.
 - **Run-length encoding in flag wave**: Starlark's `render.Column` with individual boxes is expensive. Instead of 64 columns × 32 rows = 2048 boxes, run-length encoding condenses each column into ~3–5 boxes, reducing total widget count to ~300.
 - **SIN64 integer lookup table**: Starlark has no `math` module. Pre-computed `sin(2πi/64) × 256` for i in 0..63 gives smooth sine values via table lookup; no floating-point overhead.
 - **Percentage-based timing**: Instead of fixed frame counts per section, `TOTAL_S` and percentage constants (`FLAG_PCT`, `Q_PCT`, etc.) keep the animation under Tidbyt's ~15s display limit and make timing adjustments clear and maintainable.
@@ -70,45 +81,20 @@ To test changes locally, edit `civics_test.star`, run `make serve`, and watch th
 
 ## Release Checklist
 
-Before pushing to production:
+Before merging code changes:
 
 1. **Test locally**: `make serve` and verify rendering looks correct
-2. **Verify formatting**: `make check` passes (buildifier, lint)
-3. **Commit and push**: Create a PR to main
-4. **CI passes**: GitHub Actions confirms formatting/lint OK
-5. **Sync community fork**: `cp` files and push to `civics-test` branch
-6. **Manual approval**: Merge PR to main after review
-7. **Push to device** (optional): `make push` if you have a Tidbyt
+2. **Commit and push**: Create a PR to main
+3. **Manual approval**: Merge PR to main after review
+4. **GitHub Actions**: Workflow automatically renders and pushes to device every 6 hours
 
 ## Troubleshooting
 
 - **`pixlet: command not found`**: Run `make install` to install via Homebrew
 - **`make push` fails**: Ensure `TIDBYT_DEVICE_ID` and `TIDBYT_API_KEY` are set (`echo $TIDBYT_DEVICE_ID`)
-- **`make check` fails on formatting**: Run `pixlet format apps/civicstest/civics_test.star` locally to auto-fix
-- **Community fork out of sync**: Run the sync commands from the "Community App Publishing" section
-- **Same question displayed locally**: That's expected — `time.now()` is frozen at render time. Question changes daily; push to device to see daily rotation
+- **GitHub Actions workflow fails**: Check that `TIDBYT_DEVICE_ID` and `TIDBYT_API_KEY` are set as repository secrets
+- **Same question displayed locally**: That's expected — `time.now()` is frozen at render time. Rendered question changes with each `make render` call
 
-## Community App Publishing
-
-The app is published to the Tidbyt community store via a separate fork repo at `/tmp/tidbyt-community` (branch `civics-test`, PR #3224).
-
-**Before publishing**, run `make check` to verify formatting and lint pass. Tidbyt CI enforces buildifier formatting (no column-alignment spaces, two-space inline comments) and flags unused variables — use `_` instead of `config` in `main()`.
-
-**Every time `civics_test.star` or `manifest.yaml` changes**, sync the community fork:
-
-```bash
-cp civics_test.star /tmp/tidbyt-community/apps/civicstest/civics_test.star
-cp manifest.yaml /tmp/tidbyt-community/apps/civicstest/manifest.yaml
-cd /tmp/tidbyt-community
-git add apps/civicstest/
-git commit -m "your message"
-git push origin civics-test
-```
-
-Key constraints from Tidbyt CI:
-- `manifest.yaml` `summary` field must be **≤ 26 characters**
-- `id` in manifest must be kebab-case (`civics-test`); `packageName` must be camelCase (`civicstest`)
-- Installation ID passed to `pixlet push --installation-id` must be alphanumeric only
 
 ## Starlark / Pixlet Notes
 
@@ -119,4 +105,4 @@ Key constraints from Tidbyt CI:
 - `render.Marquee(scroll_direction="vertical")` scrolls content taller than its `height`
 - `render.WrappedText` handles multi-line text within a fixed width
 - Tidbyt installation IDs must be alphanumeric only (no underscores) — hence `civicstest` not `civics_test`
-- Pushed WebP files are static — `time.now()` is evaluated at render time, not on each display cycle. For dynamic content, re-push on a schedule or publish to the Tidbyt community app store (which re-renders on their servers every ~15 min)
+- Pushed WebP files are static — `time.now()` is evaluated at render time, not on each display cycle. GitHub Actions re-renders and pushes every 6 hours with a new random question
