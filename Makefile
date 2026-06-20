@@ -14,7 +14,4 @@ serve:
 render:
 	pixlet render $(APP)
 
-push: render
-	pixlet push $(TIDBYT_DEVICE_ID) $(WEBP) --api-token $(TIDBIT_API_KEY) --installation-id $(ID)
-
-.PHONY: install serve render push
+.PHONY: install serve render
